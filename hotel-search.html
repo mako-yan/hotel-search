@@ -9,7 +9,7 @@
   :root {
     --primary: #0099cc;
     --primary-dark: #007aaa;
-    --primary-light: #e6f7ff;
+    --primary-light: #e6f7ff;h
     --primary-border: #b3e5f7;
     --text: #1a1a2e;
     --text-muted: #6b7280;
@@ -554,6 +554,8 @@ async function doSearch() {
   try {
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
+      mode:'cors',
+      credentials:'omit',
       headers:{
         'Content-Type':'application/json',
         'x-api-key': apiKey,
@@ -562,7 +564,10 @@ async function doSearch() {
       },
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
-    if(!res.ok)throw new Error('API error');
+    if(!res.ok){
+      const errBody=await res.json().catch(()=>({}));
+      throw new Error(`API error ${res.status}: ${errBody.error?.message||JSON.stringify(errBody)}`);
+    }
     const data=await res.json();
     const text=data.content?.find(b=>b.type==='text')?.text||'';
     const match=text.match(/\[[\s\S]*\]/);
